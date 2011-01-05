@@ -17,7 +17,7 @@ class ProwlFilterModule extends FilterModule {
     $sUsername = @$aProwlConfig['user'];
     $sPassword = @$aProwlConfig['password'];
     $aProwlParams = array();
-    $aProwlParams['application'] = "Mini-CMS on ".$aError['host'];
+    $aProwlParams['application'] = "rapila on ".$aError['host'];
     $aProwlParams['event'] = "Error in ".MAIN_DIR_FE.$aError['path'];
     $aProwlParams['description'] = StringUtil::truncate($aError['message'], 400);
     $sParams = http_build_query($aProwlParams);
