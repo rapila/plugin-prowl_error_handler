@@ -1,0 +1,3 @@
+prowl:
+  users:
+    "test@example.com": {user: test, password: "My-Password"}
