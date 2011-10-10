@@ -1,26 +1,29 @@
 <?php
 class ProwlFilterModule extends FilterModule {
   public function onAnyError($aOptions) {
-    $sAddress = Settings::getSetting('developer', 'email', false);
-    if(!$sAddress) {
-      $sAddress = Settings::getSetting('domain_holder', 'email', false);
-    }
-    if(!$sAddress) {
-      return;
-    }
     $aProwlConfig = Settings::getSetting('prowl', 'users', array());
-    if(!isset($aProwlConfig[$sAddress])) {
-      return;
-    }
-    $aError = $aOptions[0];
-    $aProwlConfig = $aProwlConfig[$sAddress];
-    $sUsername = @$aProwlConfig['user'];
-    $sPassword = @$aProwlConfig['password'];
+		$aKeys = array();
+		foreach($aProwlConfig as $aConfig) {
+			if(in_array(ErrorHandler::getEnvironment(), $aConfig['environments'])) {
+				$aKeys[] = $aConfig['key'];
+			}
+		}
+		if(count($aKeys) == 0) {
+			return;
+		}
+    $aError = &$aOptions[0];
+		
     $aProwlParams = array();
-    $aProwlParams['application'] = "rapila on ".$aError['host'];
-    $aProwlParams['event'] = "Error in ".MAIN_DIR_FE.$aError['path'];
-    $aProwlParams['description'] = StringUtil::truncate($aError['message'], 400);
+    $aProwlParams['apikey'] = implode(',', $aKeys);
+    $aProwlParams['application'] = "Rapila on ".$aError['host'];
+    $aProwlParams['event'] = "Error on in ".$aError['path'];
+    $aProwlParams['url'] = 'http://'.$aError['host'].$aError['path'];
+    $aProwlParams['description'] = StringUtil::truncate($aError['message'], 800);
+		
     $sParams = http_build_query($aProwlParams);
-    @file_get_contents("https://$sUsername:$sPassword@prowl.weks.net/api/add_notification.php?$sParams");
+		$rCurl = curl_init('https://api.prowlapp.com/publicapi/add');
+		curl_setopt($rCurl, CURLOPT_POSTFIELDS, $sParams);
+		curl_setopt($rCurl, CURLOPT_POST, 1);
+		curl_exec($rCurl);
   }
 }
